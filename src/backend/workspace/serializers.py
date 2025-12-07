@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from .models import Model, MLModelChoices
-from rest_framework import serializers
 
 class XGBoostParamSerializer(serializers.Serializer):
     max_depth = serializers.IntegerField(
@@ -209,7 +208,7 @@ class RandomForestParamSerializer(serializers.Serializer):
         help_text="트리 생성 시 부트스트랩 샘플링 사용 여부"
     )
 
-class GBMParamSerializer(serializers.Serializer):
+class GBMParamSerializer(serializers.ModelSerializer):
     n_estimators = serializers.IntegerField(
         required=False,
         min_value=1,
@@ -283,6 +282,12 @@ class WorkspaceCreateSerializer(serializers.ModelSerializer):
         required=False,
         help_text='AI 모델의 학습 파라미터 (예: {"n_estimators": 500, "learning_rate": 0.05})'
     )
+    PARAM_SERIALIZERS = {
+        'lightgbm': LightGBMParamSerializer,
+        'xgboost': XGBoostParamSerializer,
+        'random_forest': RandomForestParamSerializer,
+        'gradient_boosting': GBMParamSerializer,
+    }
     class Meta:
         model = Model
         fields = ['workspace', 'model_name', 'start_date', 'end_date',
@@ -298,3 +303,20 @@ class WorkspaceCreateSerializer(serializers.ModelSerializer):
             'parameter': {'required': False},
             'excluded_var': {'required': False}
         }
+    
+    def validate(self, data):
+        """전체 데이터 유효성 검사"""
+        model_name = data.get('model_name')
+        raw_params = data.get('parameter') or {}
+
+        param_serializer_cls = self.PARAN_SERIALIZERS.get(model_name)
+
+        if param_serializer_cls:
+            serializer = param_serializer_cls(data=raw_params)
+
+            if not serializer.is_valid():
+                raise serializers.ValidationError({
+                    "parameter": serializer.errors
+                })
+            
+            data['parameter'] = serializer.validated_data

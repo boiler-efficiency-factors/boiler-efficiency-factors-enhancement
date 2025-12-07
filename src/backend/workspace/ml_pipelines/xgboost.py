@@ -11,10 +11,7 @@ import numpy as np
 import base64
 import io
 import matplotlib.pyplot as plt
-
-# 💡 실제 XGBoost 라이브러리 import (import xgboost as xgb)
 from xgboost import XGBRegressor
-
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import train_test_split
 

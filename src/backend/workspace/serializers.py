@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Model, MLModelChoices
+from .models import Model, MLModelChoices, Session
 
 class XGBoostParamSerializer(serializers.Serializer):
     max_depth = serializers.IntegerField(
@@ -337,3 +337,9 @@ class WorkspaceDetailSerializer(serializers.ModelSerializer):
             'excluded_var',
             'created_at'
         ]
+
+class FeatureImportanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Session
+        # 피쳐 중요도(feature)와 성능지표, 상태를 프론트엔드로 보냅니다.
+        fields = ['session_id', 'model_id', 'feature', 'metrics', 'state']        

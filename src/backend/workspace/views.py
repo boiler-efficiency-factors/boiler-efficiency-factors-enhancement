@@ -11,7 +11,7 @@ from django.utils import timezone
 
 from .models import UserSequence, Session, SessionStateChoices, Model
 from .tasks import start_model_training
-from .serializers import WorkspaceCreateSerializer, WorkspaceDetailSerializer
+from .serializers import WorkspaceCreateSerializer, WorkspaceDetailSerializer, FeatureImportanceSerializer
 
 class WorkspaceCreateView(APIView):
     @extend_schema(
@@ -131,3 +131,33 @@ class WorkspaceDetailView(APIView):
         serializer = WorkspaceDetailSerializer(model_instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+# ✅ [수정] 피쳐 중요도 조회용 뷰
+class WorkspaceFeatureView(APIView):
+    @extend_schema(
+        summary="워크스페이스 피쳐중요도 조회",  
+        description="특정 모델의 피쳐 중요도(Feature Importance) 데이터를 반환합니다.",
+        responses={200: FeatureImportanceSerializer}
+    )
+    def get(self, request, model_id):
+        session = Session.objects.filter(model_id=model_id).last()
+        if not session:
+            return Response({"message": "분석 결과가 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = FeatureImportanceSerializer(session)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# ✅ [추가] 지표(Matrix) 조회용 뷰 
+class WorkspaceMatrixView(APIView):
+    @extend_schema(
+        summary="워크스페이스 지표 조회",  
+        description="특정 모델의 성능 지표(Metrics/Confusion Matrix) 데이터를 반환합니다.",
+        responses={200: FeatureImportanceSerializer}
+    )
+    def get(self, request, model_id):
+        session = Session.objects.filter(model_id=model_id).last()
+        if not session:
+            return Response({"message": "분석 결과가 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = FeatureImportanceSerializer(session)
+        return Response(serializer.data, status=status.HTTP_200_OK)

@@ -320,6 +320,12 @@ class WorkspaceCreateSerializer(serializers.ModelSerializer):
                 })
             
             data['parameter'] = serializer.validated_data
+        else:
+            raise serializers.ValidationError({
+                "model_name": f"지원하지 않는 모델입니다. ({model_name})"
+            })
+        
+        return data
 
 
 class WorkspaceDetailSerializer(serializers.ModelSerializer):

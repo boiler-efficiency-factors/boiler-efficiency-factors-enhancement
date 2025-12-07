@@ -8,10 +8,12 @@ from django.shortcuts import get_object_or_404
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-
+import logging
 from .models import UserSequence, Session, SessionStateChoices, Model
 from .tasks import start_model_training
 from .serializers import WorkspaceCreateSerializer, WorkspaceDetailSerializer, FeatureImportanceSerializer
+
+logger = logging.getLogger(__name__)
 
 class WorkspaceCreateView(APIView):
     @extend_schema(
@@ -56,7 +58,6 @@ class WorkspaceCreateView(APIView):
         serializer = WorkspaceCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        #TODO: DB 작업 시작
         try:
             with transaction.atomic():
                 model_instance = serializer.save() 
@@ -68,13 +69,14 @@ class WorkspaceCreateView(APIView):
                 )
                 
                 session_instance = Session.objects.create(
-                    #TODO: started_at은 DateTime 자동으로 해놨는데 timezone을 써야하나?
                     model_id=model_instance,
                     state=SessionStateChoices.CREATED,
                     started_at=timezone.now()
                 )
-                
-                start_model_training.delay(str(session_instance.session_id))
+
+                transaction.on_commit(
+                    lambda: start_model_training.delay(str(session_instance.session_id))
+                )
             
             return Response({
                 "model_id": model_instance.model_id,
@@ -84,34 +86,14 @@ class WorkspaceCreateView(APIView):
     
         except Exception as e:
             # 트랜잭션 내 오류 발생 시 자동 롤백
+            logger.error(f"Workspace creation failed: {e}", exc_info=True)
             return Response({
                 "message": f"오류 발생: {e}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 class WorkspaceDetailView(APIView):
-
     @extend_schema(
         summary="워크스페이스 상세 조회",
-        description="""
-            특정 모델(model_id)에 해당하는 Workspace의 상세 정보를 반환하는 API입니다.
-
-            ### 기능
-            - model_id(UUID)를 기반으로 Workspace 모델 정보 조회
-            - 학습 설정, 파라미터, 제외 변수 등 상세 데이터 반환
-
-            ### 요청 예시
-            GET /workspace/<model_id>/
-
-            ### 응답 예시
-            {
-                "model_id": "...",
-                "workspace": "...",
-                "model_name": "...",
-                "parameter": {...},
-                "excluded_var": [...],
-                ...
-            }
-        """,
         parameters=[
             OpenApiParameter(
                 name="model_id",

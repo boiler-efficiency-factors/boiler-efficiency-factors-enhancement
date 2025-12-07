@@ -1,13 +1,15 @@
 from django.utils import timezone
 from .base_trainer import BaseTrainer
 from ..models import SessionStateChoices
-# import lightgbm as lgb
+import lightgbm as lgb
 
 class lightgbmTrainer(BaseTrainer):
-    """lightGBM 모델 모듈"""
-    # BaseTrainer.__init__을 상속받아 model, session 인스턴스를 가짐
-
-    def run_training(self):
+    """
+    lightGBM 모델 모듈
+    BaseTrainer.__init__을 상속받아 model, session 인스턴스를 가짐
+    """
+    
+    def run(self):
         """
         LightGBM 학습을 수행하고 Session 객체에 결과 및 완료 상태를 저장
         """

@@ -5,16 +5,12 @@ from .utils.data_loader import data_loader
 from .utils.preprocessor import preprocessor
 from .utils.metrics import calculate_metrics
 from .utils.feature_importance import generate_feature_importance
-
-
 import pandas as pd
 import numpy as np
 import base64
 import io
 import matplotlib.pyplot as plt
-
 from sklearn.ensemble import GradientBoostingRegressor
-
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import train_test_split
 
@@ -23,7 +19,7 @@ class gbmTrainer(BaseTrainer):
     Gradient Boosting Machine 모델 학습을 담당합니다.
     """
     
-    def run_training(self):
+    def run(self):
         """GBM 학습을 수행하고 Session 객체에 결과 및 완료 상태를 저장합니다."""
         
         try:

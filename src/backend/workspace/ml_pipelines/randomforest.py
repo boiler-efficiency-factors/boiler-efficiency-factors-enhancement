@@ -23,7 +23,7 @@ class randomforestTrainer(BaseTrainer):
     Random Forest 모델 학습을 담당합니다.
     """
     
-    def run_training(self):
+    def run(self):
         """Random Forest 학습을 수행하고 Session 객체에 결과 및 완료 상태를 저장합니다."""
         
         try:

@@ -6,7 +6,6 @@ from .utils.preprocessor import preprocessor
 from .utils.metrics import calculate_metrics
 from .utils.feature_importance import generate_feature_importance
 
-
 import pandas as pd
 import numpy as np
 import base64
@@ -24,7 +23,7 @@ class xgboostTrainer(BaseTrainer):
     XGBoost 모델 학습을 담당합니다.
     """
     
-    def run_training(self):
+    def run(self):
         """XGBoost 학습을 수행하고 Session 객체에 결과 및 완료 상태를 저장합니다."""
         
         try:

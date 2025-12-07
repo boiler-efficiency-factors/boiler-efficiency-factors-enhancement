@@ -20,7 +20,7 @@ class BaseTrainer(ABC):
         6. feature importance
         """
 
-    def run_training(self):
+    def run(self):
         """
         학습 전체 흐름 및 상태 관리 및 오류 처리 메서드
         """

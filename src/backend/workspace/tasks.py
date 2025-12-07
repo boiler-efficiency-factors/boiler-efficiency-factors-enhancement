@@ -19,11 +19,10 @@ def start_model_training(session_id: str):
         TrainerClass = trainer_factory.get_trainer(model_instance.model_name)
         trainer = TrainerClass(model_instance, session)
 
-        #TODO: run_training()에서 각 모듈 내부에서 FAILED/COMPLETED 상태 저장.
-        trainer.run_training()
+        #TODO: run()에서 각 모듈 내부에서 FAILED/COMPLETED 상태 저장.
+        trainer.run()
     
     except Session.DoesNotExist:
-        #TODO: DB에서 해당 세션 정보를 찾지 못한 경우 log
         logger.error(f"Session ID {session_id} not found. Task aborted.")
     
     except Exception as e:

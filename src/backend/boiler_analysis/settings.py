@@ -123,6 +123,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.ngrok-free.app',
+    'https://*.ngrok.io',
+]
+
 
 # ==============================================================================
 # 6. 데이터베이스 (DATABASE)

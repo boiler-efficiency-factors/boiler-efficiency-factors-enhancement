@@ -209,4 +209,18 @@ class WorkspaceListView(generics.ListAPIView):
 
     def get_queryset(self):
         return Model.objects.all().order_by('-created_at')
+
+class WorkspaceDeleteView(generics.DestroyAPIView):
+    queryset = Model.objects.all()
+    lookup_field = 'model_id'
+
+    @extend_schema(
+        summary="워크스페이스(모델) 삭제",
+        responses={
+            204: None,
+            404: {"description": "해당 model_id를 찾을 수 없음"}
+        }
+    )
+    def delete(self, request, *args, **kwargs):
+        return super().delete(request, *args, **kwargs)
     

@@ -309,7 +309,7 @@ class WorkspaceCreateSerializer(serializers.ModelSerializer):
         model_name = data.get('model_name')
         raw_params = data.get('parameter') or {}
 
-        param_serializer_cls = self.PARAN_SERIALIZERS.get(model_name)
+        param_serializer_cls = self.PARAM_SERIALIZERS.get(model_name)
 
         if param_serializer_cls:
             serializer = param_serializer_cls(data=raw_params)

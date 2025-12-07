@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
-from drf_spectacular.utils import extend_schema, OpenApiExample
+from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse, OpenApiParameter
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -87,11 +87,47 @@ class WorkspaceCreateView(APIView):
             return Response({
                 "message": f"오류 발생: {e}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+    
 class WorkspaceDetailView(APIView):
+
+    @extend_schema(
+        summary="워크스페이스 상세 조회",
+        description="""
+            특정 모델(model_id)에 해당하는 Workspace의 상세 정보를 반환하는 API입니다.
+
+            ### 기능
+            - model_id(UUID)를 기반으로 Workspace 모델 정보 조회
+            - 학습 설정, 파라미터, 제외 변수 등 상세 데이터 반환
+
+            ### 요청 예시
+            GET /workspace/<model_id>/
+
+            ### 응답 예시
+            {
+                "model_id": "...",
+                "workspace": "...",
+                "model_name": "...",
+                "parameter": {...},
+                "excluded_var": [...],
+                ...
+            }
+        """,
+        parameters=[
+            OpenApiParameter(
+                name="model_id",
+                type=str,
+                location=OpenApiParameter.PATH,
+                required=True,
+                description="조회할 모델의 UUID"
+            ),
+        ],
+        responses={
+            200: WorkspaceDetailSerializer,
+            404: OpenApiResponse(description="해당 model_id에 해당하는 Workspace를 찾을 수 없습니다.")
+        }
+    )
     def get(self, request, model_id):
         model_instance = get_object_or_404(Model, model_id=model_id)
-
         serializer = WorkspaceDetailSerializer(model_instance)
-
         return Response(serializer.data, status=status.HTTP_200_OK)
+

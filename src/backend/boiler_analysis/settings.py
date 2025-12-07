@@ -71,6 +71,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+CORS_ALLOW_ALL_ORIGINS = True
+
 
 # ==============================================================================
 # 3. URL 및 템플릿 (URLS & TEMPLATES)
@@ -121,18 +123,6 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
-]
-
-CSRF_TRUSTED_ORIGINS = [
-    'https://*.ngrok-free.app',
-    'https://*.ngrok.io',
-]
-
-ALLOWED_HOSTS = [
-    '127.0.0.1', 
-    'localhost', 
-    '.ngrok-free.app',
-    '.ngrok.io'
 ]
 
 

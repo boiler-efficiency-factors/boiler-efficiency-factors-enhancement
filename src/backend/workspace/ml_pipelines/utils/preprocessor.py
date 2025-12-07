@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.impute import SimpleImputer
 
-def process_boiler_data(raw_df: pd.DataFrame) -> pd.DataFrame:
+def preprocessor(raw_df: pd.DataFrame) -> pd.DataFrame:
     df = raw_df.copy()
 
     # 1. 불필요 컬럼 제거

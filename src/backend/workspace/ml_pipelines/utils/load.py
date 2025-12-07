@@ -21,7 +21,7 @@ BOILER_COLUMNS = [
     '열 손실법 효율', '효율(입출력법-스팀)'
 ]
 
-def load_data(start_date: str, end_date: str) -> Optional[pd.DataFrame]:
+def load(start_date: str, end_date: str) -> Optional[pd.DataFrame]:
     """
     지정된 기간의 CSV 데이터를 로드하여 하나로 합칩니다.
     """
@@ -63,9 +63,3 @@ def load_data(start_date: str, end_date: str) -> Optional[pd.DataFrame]:
     else:
         logger.warning("해당 기간에 로드된 데이터가 없습니다.")
         return None
-
-# 테스트 실행용
-if __name__ == "__main__":
-    df = load_data("2025-01-01", "2025-01-05")
-    if df is not None:
-        print(df.head())

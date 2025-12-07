@@ -1,60 +1,75 @@
 from django.utils import timezone
-from .base_trainer import BaseTrainer
 from ..models import SessionStateChoices
+from .base_trainer import BaseTrainer
+from lightgbm import LGBMRegressor
 import lightgbm as lgb
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from .utils.load import load
+from .utils.preprocessor import preprocessor
+from .utils.metrics import metrics
+from .utils.feature import feature
 
 class lightgbmTrainer(BaseTrainer):
-    """
-    lightGBM 모델 모듈
-    BaseTrainer.__init__을 상속받아 model, session 인스턴스를 가짐
-    """
-    
+
     def run(self):
-        """
-        LightGBM 학습을 수행하고 Session 객체에 결과 및 완료 상태를 저장
-        """
-        
+        """LightGBM 학습 & Session 객체에 결과 및 완료 상태를 저장"""
         try:
             start_date = self.model.start_date
             end_date = self.model.end_date
-            params = self.model.parameter or {} # JSONField 파라미터 로드
+            params = self.model.parameter or {}
+
+            # 데이터 로딩 및 전처리
+            X_train, X_test, y_train, y_test = self._set(start_date, end_date)
             
-            # 2. 🌟 실제 데이터 로딩 및 전처리 (구현 필요)
-            data = self._load_data(start_date, end_date)
+            #TODO: 모델 학습 실행
+            lgbm_model = LGBMRegressor(
+                **params,
+                random_state=42,
+                n_jobs=-1,
+                objective='regression',
+                force_col_wise=True
+            )
+            lgbm_model.fit(
+                X_train, y_train,
+                eval_set=[(X_test, y_test)],
+                eval_metric='rmse',
+                callbacks=[
+                    lgb.early_stopping(stopping_rounds=50), 
+                    lgb.log_evaluation(period=100)
+                ]
+            )
+
+            metrics_result = metrics(lgbm_model, X_test, y_test)
+            feature_result = feature(lgbm_model, X_train)
             
-            # 3. 🌟 모델 학습 실행 (실제 시간이 소요되는 부분)
-            # lgb_model = lgb.train(params, data) # <-- 실제 학습 코드
+            self.session.metrics = metrics_result
+            self.session.feature = feature_result
             
-            # 4. 결과 계산 및 세션 업데이트
-            metrics = self._calculate_metrics() # <-- 임시 함수
-            feature_importance = self._generate_feature_importance_base64() # <-- 임시 함수
-            
-            self.session.metrics = metrics
-            self.session.feature = feature_importance
-            
-            # 5. 🌟 상태 변경 및 DB 저장 (COMPLETED 상태 반영)
             self.session.state = SessionStateChoices.COMPLETED
             self.session.finished_at = timezone.now()
             self.session.save()
             
         except Exception as e:
-            # 학습 중 오류 발생 시, Celery tasks.py에서 FAILED 상태로 처리됩니다.
-            # 이중 처리가 되지만, 여기서도 필요하다면 FAILED 처리가 가능합니다.
-            # 여기서는 예외를 다시 발생시켜 tasks.py의 except 블록에서 FAILED 처리를 유도합니다.
+            # 학습 중 오류 발생 시, Celery tasks.py에서 FAILED 상태로 처리
             raise e
 
-    def _load_data(self, start_date, end_date):
-        """데이터베이스 또는 파일에서 학습 데이터를 로드하고 전처리하는 로직"""
-        # (실제 구현 필요)
+    def _set(self, start_date, end_date):
+        """데이터 로드 및 전처리 후 학습/테스트 데이터셋 분리"""
+        
         print(f"Loading data from {start_date} to {end_date}...")
-        return "Loaded Data Structure"
 
-    def _calculate_metrics(self):
-        """학습된 모델의 성능 지표를 계산하는 로직"""
-        # (실제 구현 필요)
-        return {"accuracy": 0.92, "f1_score": 0.90}
+        df = load(start_date, end_date) # 데이터 로드
+        df = preprocessor(df)           # 데이터 전처리
 
-    def _generate_feature_importance_base64(self):
-        """특성 중요도 그래프를 생성하고 base64 문자열로 인코딩하는 로직"""
-        # (실제 구현 필요)
-        return "base64_encoded_graph_string"
+        # 타겟 변수 선택
+        y_col = self.model.dependent_var
+        X = df.drop(columns=[y_col])
+        y = df[y_col]
+
+        # split data into train and test sets
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=True)
+
+        return X_train, X_test, y_train, y_test #Loaded Data Structure

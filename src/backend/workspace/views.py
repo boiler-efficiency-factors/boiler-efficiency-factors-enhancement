@@ -13,7 +13,7 @@ from django.utils import timezone
 import logging
 from .models import UserSequence, Session, SessionStateChoices, Model
 from .tasks import start_model_training
-from .serializers import WorkspaceCreateSerializer, WorkspaceDetailSerializer, FeatureImportanceSerializer
+from .serializers import WorkspaceCreateSerializer, WorkspaceDetailSerializer, FeatureImportanceSerializer, WorkspacePaginationSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -149,6 +149,9 @@ class WorkspaceMatrixView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 class WorkspaceListView(generics.ListAPIView):
+    serializer_class = WorkspacePaginationSerializer
+    pagination_class = WorkspacePagination
+
     @extend_schema(
         summary="워크스페이스 목록 조회",
         responses=WorkspaceCreateSerializer,

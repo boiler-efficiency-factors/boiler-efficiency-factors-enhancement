@@ -348,4 +348,9 @@ class FeatureImportanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Session
         # 피쳐 중요도(feature)와 성능지표, 상태를 프론트엔드로 보냅니다.
-        fields = ['session_id', 'model_id', 'feature', 'metrics', 'state']        
+        fields = ['session_id', 'model_id', 'feature', 'metrics', 'state']
+
+class WorkspacePaginationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Model
+        fields = '__all__'

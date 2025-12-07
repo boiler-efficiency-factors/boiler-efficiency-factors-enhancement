@@ -1,8 +1,10 @@
 from django.db import transaction
 from rest_framework.views import APIView
+from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
+from rest_framework.pagination import PageNumberPagination
 from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse, OpenApiParameter
 from django.shortcuts import get_object_or_404
 from django.conf import settings
@@ -14,6 +16,11 @@ from .tasks import start_model_training
 from .serializers import WorkspaceCreateSerializer, WorkspaceDetailSerializer, FeatureImportanceSerializer
 
 logger = logging.getLogger(__name__)
+
+class WorkspacePagination(PageNumberPagination):
+    page_size = 10
+    page_query_param = 'page'
+    max_page_size = 100
 
 class WorkspaceCreateView(APIView):
     @extend_schema(
@@ -113,7 +120,6 @@ class WorkspaceDetailView(APIView):
         serializer = WorkspaceDetailSerializer(model_instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-# ✅ [수정] 피쳐 중요도 조회용 뷰
 class WorkspaceFeatureView(APIView):
     @extend_schema(
         summary="워크스페이스 피쳐중요도 조회",  
@@ -128,8 +134,6 @@ class WorkspaceFeatureView(APIView):
         serializer = FeatureImportanceSerializer(session)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-# ✅ [추가] 지표(Matrix) 조회용 뷰 
 class WorkspaceMatrixView(APIView):
     @extend_schema(
         summary="워크스페이스 지표 조회",  
@@ -143,3 +147,63 @@ class WorkspaceMatrixView(APIView):
         
         serializer = FeatureImportanceSerializer(session)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class WorkspaceListView(generics.ListAPIView):
+    @extend_schema(
+        summary="워크스페이스 목록 조회",
+        responses=WorkspaceCreateSerializer,
+        examples=[
+            OpenApiExample(
+                name='목록 조회 응답 예시',
+                summary='페이지네이션 및 필드 타입 반영 예시',
+                description='실제 Model 구조에 맞춘 응답 데이터입니다.',
+                value={
+                    "count": 15,
+                    "next": "http://127.0.0.1:8000/api/workspace/list/?page=2",
+                    "previous": None,
+                    "results": [
+                        {
+                            "model_id": "550e8400-e29b-41d4-a716-446655440000",
+                            "workspace": "2024_하반기_보일러_효율분석",
+                            "model_name": "lightgbm",
+                            "start_date": "2024-01-01",
+                            "end_date": "2024-06-30",
+                            "parameter": {
+                                "n_estimators": 500,
+                                "learning_rate": 0.01,
+                                "max_depth": -1
+                            },
+                            "tuning": "grid",
+                            "dependent_var": "heat_efficiency",
+                            "excluded_var": ["sensor_error_flag", "maintenance_mode"],
+                            "created_at": "2025-12-08T10:00:00Z",
+                            "updated_at": "2025-12-08T10:30:00Z"
+                        },
+                        {
+                            "model_id": "a1b2c3d4-e5f6-7890-1234-56789abcdef0",
+                            "workspace": "테스트_모델_RandomForest",
+                            "model_name": "randomforest",
+                            "start_date": "2024-07-01",
+                            "end_date": "2024-07-07",
+                            "parameter": {
+                                "n_estimators": 100,
+                                "max_depth": 5
+                            },
+                            "tuning": "random",
+                            "dependent_var": "output_temperature",
+                            "excluded_var": [],
+                            "created_at": "2025-12-07T15:20:00Z",
+                            "updated_at": "2025-12-07T15:20:00Z"
+                        }
+                    ]
+                },
+                response_only=True
+            )
+        ]
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return Model.objects.all().order_by('-created_at')
+    

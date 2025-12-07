@@ -13,6 +13,7 @@ redis
 # AI packages
 pandas
 numpy
+matplotlib
 scikit-learn
 lightgbm
 xgboost

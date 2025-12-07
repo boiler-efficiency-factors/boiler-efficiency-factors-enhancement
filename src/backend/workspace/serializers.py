@@ -320,3 +320,19 @@ class WorkspaceCreateSerializer(serializers.ModelSerializer):
                 })
             
             data['parameter'] = serializer.validated_data
+
+class WorkspaceDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Model
+        fields = [
+            'model_id',
+            'workspace', 
+            'model_name', 
+            'start_date', 
+            'end_date',
+            'parameter', 
+            'tuning',
+            'dependent_var', 
+            'excluded_var',
+            'created_at'
+        ]

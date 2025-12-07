@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import WorkspaceCreateView, WorkspaceDetailView
+from .views import WorkspaceCreateView, WorkspaceDetailView, WorkspaceFeatureView, WorkspaceMatrixView
 
 urlpatterns = [
     # 워크스페이스 생성

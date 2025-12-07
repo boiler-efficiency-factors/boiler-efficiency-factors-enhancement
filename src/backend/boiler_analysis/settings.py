@@ -128,6 +128,13 @@ CSRF_TRUSTED_ORIGINS = [
     'https://*.ngrok.io',
 ]
 
+ALLOWED_HOSTS = [
+    '127.0.0.1', 
+    'localhost', 
+    '.ngrok-free.app',
+    '.ngrok.io'
+]
+
 
 # ==============================================================================
 # 6. 데이터베이스 (DATABASE)

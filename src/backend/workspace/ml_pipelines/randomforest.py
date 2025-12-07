@@ -61,7 +61,7 @@ class randomforestTrainer(BaseTrainer):
         print(f"Loading data from {start_date} to {end_date}...")
 
         df = load(start_date, end_date)     # 데이터 로드
-        df = preprocessor.preprocessor(df)  # 데이터 전처리
+        df = preprocessor(df)  # 데이터 전처리
 
         # 타겟 변수 선택
         y_col = self.model.dependent_var

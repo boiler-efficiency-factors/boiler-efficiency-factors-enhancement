@@ -35,7 +35,13 @@ class xgboostTrainer(BaseTrainer):
             xgb_model.fit(X_train, y_train)
             
             # 결과 계산
-            metrics_result = metrics(xgb_model, X_test, y_test)
+            test_metrics = metrics(xgb_model, X_test, y_test)
+            train_metrics = metrics(xgb_model, X_train, y_train)
+
+            metrics_result = {
+                "test": test_metrics,
+                "train": train_metrics
+            }
             feature_result = feature(xgb_model, X_train)
             
             self.session.metrics = metrics_result

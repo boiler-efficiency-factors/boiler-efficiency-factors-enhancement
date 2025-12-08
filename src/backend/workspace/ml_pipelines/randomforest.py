@@ -37,8 +37,16 @@ class randomforestTrainer(BaseTrainer):
             rf_model.fit(X_train, y_train)
             
             # 결과 계산
-            metrics_result = metrics(rf_model, X_test, y_test)
+            test_metrics = metrics(rf_model, X_test, y_test)
+            train_metrics = metrics(rf_model, X_train y_train)
+
+            metrics_result = {
+                "test": test_metrics,
+                "train": train_metrics
+            }
+            
             feature_result = feature(rf_model, X_train)
+
             
             self.session.metrics = metrics_result
             self.session.feature = feature_result

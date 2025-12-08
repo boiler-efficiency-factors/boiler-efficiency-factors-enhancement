@@ -41,8 +41,14 @@ class lightgbmTrainer(BaseTrainer):
                     lgb.log_evaluation(period=100)
                 ]
             )
+            # 결과 계산
+            test_metrics = metrics(lgbm_model, X_test, y_test)
+            train_metrics = metrics(lgbm_model, X_train, y_train)
 
-            metrics_result = metrics(lgbm_model, X_test, y_test)
+            metrics_result = {
+                "test": test_metrics,
+                "train": train_metrics
+            }
             feature_result = feature(lgbm_model, X_train)
             
             self.session.metrics = metrics_result

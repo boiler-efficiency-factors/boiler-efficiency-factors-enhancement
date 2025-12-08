@@ -1,11 +1,11 @@
 import { useState } from 'react';
-//import imgImage1 from "figma:asset/9455e449a8552d0d5315c2395b0a6b3b3b6be99c.png";
-<img src="/assets/9455e449a8552d0d5315c2395b0a6b3b3b6be99c.png" alt="" />
+import imgImage1 from "figma:asset/9455e449a8552d0d5315c2395b0a6b3b3b6be99c.png";
 import WorkspaceInfoPopup from './WorkspaceInfoPopup';
+import type { Workspace } from "../types/workspace";
 
 interface SessionProps {
   username: string;
-  workspaceName: string;
+  workspace: Workspace;
   onBack: () => void;
 }
 
@@ -297,7 +297,7 @@ function NavBar({ username, onBack }: { username: string; onBack: () => void }) 
   );
 }
 
-export default function Session({ username, workspaceName, onBack }: SessionProps) {
+export default function Session({ username, workspace, onBack }: SessionProps) {
   const [showInfoPopup, setShowInfoPopup] = useState(false);
 
   const handleInfoClick = () => {
@@ -310,9 +310,9 @@ export default function Session({ username, workspaceName, onBack }: SessionProp
 
   return (
     <div className="bg-[var(--darkreader-background-f9f9f9,#d8d6d2)] relative min-h-screen w-full" data-name="Session">
-      <AuthCreateAccount workspaceName={workspaceName} onInfoClick={handleInfoClick} />
+      <AuthCreateAccount workspaceName={workspace.name} onInfoClick={handleInfoClick} />
       <NavBar username={username} onBack={onBack} />
-      {showInfoPopup && <WorkspaceInfoPopup workspaceName={workspaceName} onClose={handleCloseInfo} />}
+      {showInfoPopup && <WorkspaceInfoPopup workspace={workspace} onClose={handleCloseInfo} />}
     </div>
   );
 }

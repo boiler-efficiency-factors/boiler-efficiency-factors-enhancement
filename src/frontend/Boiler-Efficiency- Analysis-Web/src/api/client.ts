@@ -1,29 +1,45 @@
-import axios from "axios";
+import axios, { AxiosError, AxiosRequestConfig } from "axios";
 import { token } from "../auth/token";
 import { refreshAccess } from "./auth";
 
-const baseURL = import.meta.env.VITE_API_BASE_URL;
-
+const prodBaseURL = String(import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+const baseURL = import.meta.env.DEV ? "" : prodBaseURL;
 export const raw = axios.create({ baseURL });
-
 export const api = axios.create({ baseURL });
 
 api.interceptors.request.use((config) => {
+  //(config.headers as any)["ngrok-skip-browser-warning"] = "69420";
   const access = token.getAccess();
-  if (access) config.headers.Authorization = `Bearer ${access}`;
+  if (access) {
+    config.headers = config.headers ?? {};
+    (config.headers as any).Authorization = `Bearer ${access}`;
+  }
   return config;
 });
 
+type RetryConfig = AxiosRequestConfig & { _retry?: boolean };
+
 api.interceptors.response.use(
-  (r) => r,
-  async (err) => {
-    const original = err.config;
-    if (err.response?.status === 401 && original && !original._retry) {
+  (res) => res,
+  async (error: AxiosError) => {
+    const status = error.response?.status;
+    const original = error.config as RetryConfig | undefined;
+
+    const url = String(original?.url ?? "");
+    const isAuthRoute =
+      url.includes("/api/auth/login/") ||
+      url.includes("/api/auth/refresh/") ||
+      url.includes("/api/auth/logout/");
+
+    if (status === 401 && original && !original._retry && !isAuthRoute) {
       original._retry = true;
-      const newAccess = await refreshAccess();
-      original.headers.Authorization = `Bearer ${newAccess}`;
+      const newAccess = await refreshAccess(); // 실패하면 throw
+      original.headers = original.headers ?? {};
+      (original.headers as any).Authorization = `Bearer ${newAccess}`;
       return api(original);
     }
-    throw err;
+
+    return Promise.reject(error);
+
   }
 );

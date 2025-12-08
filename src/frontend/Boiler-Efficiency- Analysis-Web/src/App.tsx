@@ -1,174 +1,234 @@
-import { useEffect, useState } from 'react';
-import AuthLogin from './components/AuthLogin';
-import AuthCreateAccount from './components/AuthCreateAccount';
-import Home from './components/Home';
-import HomePopupAddWorkspace from './components/HomePopupAddWorkspace';
-import Session from './components/Session';
-import { login as apiLogin } from "./api/auth";
+import { useEffect, useState } from "react";
+import type { Workspace, WorkspaceCreateInput } from "./types/workspace";
+import LoginPage from "./pages/LoginPage";
+import CreateAccountPage from "./pages/CreateAccountPage";
+import HomePage from "./pages/HomePage";
+import SessionPage from "./pages/SessionPage";
+import { getWorkspacePaging, deleteWorkspace } from "./api/workspace";
 
+import { token } from "./auth/token";
+import { session } from "./auth/session";
+import { getUserIdFromAccess } from "./auth/jwt";
 
-type Screen = 'login' | 'createAccount' | 'home' | 'session';
+import * as authApi from "./api/auth";
+import * as wsApi from "./api/workspace";
 
-type LoginResponse = {
-  access: string;
-  refresh: string;
-};
-
-const ACCESS_KEY = 'access';
-const REFRESH_KEY = 'refresh';
-const USERNAME_KEY = 'user_name';
-
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
-
-async function postJSON<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-
-  const text = await res.text();
-  let data: any = null;
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch {
-    data = null;
-  }
-
-  if (!res.ok) {
-
-    const msg = data?.detail || data?.message || `${res.status} ${res.statusText}`;
-    throw new Error(msg);
-  }
-
-  return data as T;
-}
-
-function saveTokens(access: string, refresh: string, user_name: string) {
-  localStorage.setItem(ACCESS_KEY, access);
-  localStorage.setItem(REFRESH_KEY, refresh);
-  localStorage.setItem(USERNAME_KEY, user_name);
-}
+type Screen = "login" | "createAccount" | "home" | "session";
 
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState<Screen>('login');
-  const [username, setUsername] = useState<string>('');
-  const [showPopup, setShowPopup] = useState<boolean>(false);
-  const [selectedWorkspace, setSelectedWorkspace] = useState<string>('');
-  const [authBusy, setAuthBusy] = useState<boolean>(false);
+  const [nextDisabled, setNextDisabled] = useState(true);
+  const [prevDisabled, setPrevDisabled] = useState(true);
+  const pageSize = 10;
+  const [currentScreen, setCurrentScreen] = useState<Screen>("login");
+  const [username, setUserName] = useState<string>("");
+  const [showPopup, setShowPopup] = useState(false);
+
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace | null>(null);
+  const [nextUrl, setNextUrl] = useState<string | null>(null);
+  const [prevUrl, setPrevUrl] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const loadWorkspaces = async (page: number) => {
+    const data: any = await getWorkspacePaging(page);
+    const toWorkspace = (raw: any): Workspace => ({
+      id: String(raw?.id ?? raw?.model_id ?? raw?.workspace_id ?? ""),
+      name: String(raw?.name ?? raw?.workspace ?? raw?.title ?? "-"),
+      model: String(raw?.model ?? raw?.selected_model ?? "-"),
+      startDate: String(raw?.startDate ?? raw?.start_date ?? raw?.start ?? "-"),
+      endDate: String(raw?.endDate ?? raw?.end_date ?? raw?.end ?? "-"),
+      createdAt: String(raw?.createdAt ?? raw?.created_at ?? raw?.created ?? "-"),
+      status: String(raw?.status ?? raw?.state ?? raw?.session_status ?? "pending"),
+    });
+    const resultsRaw: any[] =
+      Array.isArray(data?.results) ? data.results :
+      Array.isArray(data?.page?.items) ? data.page.items :
+      [];
+
+    const results: Workspace[] = resultsRaw.map(toWorkspace);
+    setWorkspaces(results);
+    const detailSettled = await Promise.allSettled(
+      results.map(async (w) => {
+        const detail = await wsApi.getWorkspaceDetail(w.id);
+        const status =
+          detail?.status ??
+          detail?.session_status ??
+          detail?.workspace?.status ??
+          detail?.workspace?.session_status;
+
+        return { id: w.id, status };
+      })
+    );
+
+    const statusMap = new Map<string, unknown>();
+    for (const r of detailSettled) {
+      if (r.status === "fulfilled" && r.value?.id) {
+        statusMap.set(r.value.id, r.value.status);
+      }
+    }
+
+    setWorkspaces((prev) =>
+      prev.map((w) => {
+        const s = statusMap.get(w.id);
+        return s == null ? w : { ...w, status: String(s) };
+      })
+    );
+
+    const count: number =
+      typeof data?.count === "number" ? data.count :
+      typeof data?.page?.count === "number" ? data.page.count :
+      mapped.length;
+
+    setNextDisabled(!(data?.next ?? data?.page?.next));
+    setPrevDisabled(!(data?.previous ?? data?.page?.previous));
+
+    setTotalPages(Math.max(1, Math.ceil(count / pageSize)));
+  };
 
   useEffect(() => {
-    const access = localStorage.getItem(ACCESS_KEY);
-    const savedUser = localStorage.getItem(USERNAME_KEY);
-    if (access && savedUser) {
-      setUsername(savedUser);
-      setCurrentScreen('home');
+    const access = token.getAccess();
+    if (access) {
+      setUserName(session.getUserName() ?? "");
+      setCurrentScreen("home");
+      loadWorkspaces(1).catch(() => {
+        token.clear();
+        session.clear();
+        setCurrentScreen("login");
+      });
     }
   }, []);
 
-  const handleCreateAccountClick = () => {
-    setCurrentScreen('createAccount');
-  };
+  useEffect(() => {
+    if (currentScreen !== "home") return;
 
-  const handleBackToLogin = () => {
-    setCurrentScreen('login');
-  };
+    const id = window.setInterval(() => {
+      loadWorkspaces(currentPage).catch(() => {
+      });
+    }, 5000);
 
+    return () => window.clearInterval(id);
+  }, [currentScreen, currentPage]);
+  
+  
   const handleLogin = async (user: string, password: string) => {
-  try {
-    setAuthBusy(true);
-    await apiLogin(user, password);
-    localStorage.setItem("user_name", user); 
-    setUsername(user);
-    setCurrentScreen("home");
+    try {
+      await authApi.login(user, password);
+      session.setUserName(user);
+      setUserName(user);
+      setCurrentScreen("home");
+      await loadWorkspaces(1);
     } catch (e: any) {
-      alert(e?.response?.data?.detail ?? e?.message ?? "로그인 실패");
-    } finally {
-      setAuthBusy(false);
+      alert(`로그인 실패: ${e?.message ?? "unknown error"}`);
     }
   };
-
 
   const handleCreateAccount = async (user: string, password: string) => {
-    if (authBusy) return;
-    if (!API_BASE_URL) {
-      alert('VITE_API_BASE_URL이 설정되어 있지 않습니다. (.env 확인)');
-      return;
-    }
-
     try {
-      setAuthBusy(true);
-
-      await postJSON<unknown>('/api/user/register/', {
-        user_name: user,
-        password,
-        verify_password: password, 
-      });
-
-
-      const data = await postJSON<LoginResponse>('/api/auth/login/', {
-        user_name: user,
-        password,
-      });
-
-      saveTokens(data.access, data.refresh, user);
-      setUsername(user);
-      setCurrentScreen('home');
+      await authApi.register(user, password);
+      await handleLogin(user, password); 
     } catch (e: any) {
-      alert(e?.message ?? '회원가입 실패');
-    } finally {
-      setAuthBusy(false);
+      alert(`회원가입 실패: ${e?.message ?? "unknown error"}`);
     }
   };
 
-  const handleAddWorkspace = () => {
-    setShowPopup(true);
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+    } finally {
+      session.clear();
+      setUserName("");
+      setWorkspaces([]);
+      setSelectedWorkspace(null);
+      setCurrentScreen("login");
+    }
   };
 
-  const handleClosePopup = () => {
-    setShowPopup(false);
+  const handleCreateWorkspace = async (data: WorkspaceCreateInput) => {
+    try {
+      await wsApi.createWorkspace(data);
+      setShowPopup(false);
+      await loadWorkspaces(1);
+    } catch (e: any) {
+      alert(`워크스페이스 생성 실패: ${e?.message ?? "unknown error"}`);
+    }
   };
 
-  const handleWorkspaceClick = (workspaceName: string) => {
-    setSelectedWorkspace(workspaceName);
-    setCurrentScreen('session');
+  const handleWorkspaceClick = (workspaceId: string) => {
+    const ws = workspaces.find((w) => w.id === workspaceId) ?? null;
+    setSelectedWorkspace(ws);
+    setCurrentScreen("session");
   };
 
-  const handleBackToHome = () => {
-    setCurrentScreen('home');
+  const handlePageChange = async (page: number) => {
+    setCurrentPage(page);
+    await loadWorkspaces(page);
+  };
+
+  const handleNext = async () => {
+    if (nextDisabled) return;
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    await loadWorkspaces(nextPage);
+  };
+
+  const handlePrev = async () => {
+    if (prevDisabled) return;
+    const prevPage = currentPage - 1;
+    setCurrentPage(prevPage);
+    await loadWorkspaces(prevPage);
+  };
+
+  const handleDeleteWorkspace = async (modelId: string) => {
+    await deleteWorkspace(modelId);
+    await loadWorkspaces(currentPage);
   };
 
   return (
-    <>
-      {currentScreen === 'login' && (
-        <AuthLogin
-          onCreateAccount={handleCreateAccountClick}
+    <div className="min-h-screen w-full">
+      {currentScreen === "login" && (
+        <LoginPage
           onLogin={handleLogin}
+          onCreateAccount={() => setCurrentScreen("createAccount")}
         />
       )}
-      {currentScreen === 'createAccount' && (
-        <AuthCreateAccount
-          onBack={handleBackToLogin}
+
+      {currentScreen === "createAccount" && (
+        <CreateAccountPage
+          onBack={() => setCurrentScreen("login")}
           onCreateAccount={handleCreateAccount}
         />
       )}
-      {currentScreen === 'home' && (
-        <>
-          <Home
-            username={username}
-            onAddWorkspace={handleAddWorkspace}
-            onWorkspaceClick={handleWorkspaceClick}
-          />
-          {showPopup && <HomePopupAddWorkspace onClose={handleClosePopup} />}
-        </>
-      )}
-      {currentScreen === 'session' && (
-        <Session
+
+      {currentScreen === "home" && (
+        <HomePage
           username={username}
-          workspaceName={selectedWorkspace}
-          onBack={handleBackToHome}
+          workspaces={workspaces}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onAddWorkspace={() => setShowPopup(true)}
+          onClosePopup={() => setShowPopup(false)}
+          showPopup={showPopup}
+          onCreateWorkspace={handleCreateWorkspace}
+          onWorkspaceClick={handleWorkspaceClick}
+          //onDeleteWorkspace={handleDeleteWorkspace}
+          onDeleteWorkspace={() => {}}
+          onPageChange={handlePageChange}
+          nextDisabled={nextDisabled}
+          prevDisabled={prevDisabled}
+          onNext={handleNext}
+          onPrev={handlePrev}
+          onLogout={handleLogout}
         />
       )}
-    </>
+
+      {currentScreen === "session" && selectedWorkspace && (
+        <SessionPage
+          username={username}
+          workspace={selectedWorkspace}
+          onBack={() => setCurrentScreen("home")}
+        />
+      )}
+    </div>
   );
 }

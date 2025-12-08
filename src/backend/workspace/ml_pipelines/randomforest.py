@@ -38,7 +38,7 @@ class randomforestTrainer(BaseTrainer):
             
             # 결과 계산
             test_metrics = metrics(rf_model, X_test, y_test)
-            train_metrics = metrics(rf_model, X_train y_train)
+            train_metrics = metrics(rf_model, X_train, y_train)
 
             metrics_result = {
                 "test": test_metrics,

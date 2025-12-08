@@ -27,8 +27,8 @@ urlpatterns = [
          name='workspace-paging'),
 
      # 피쳐 중요도 조회
-     # URL: GET /api/home/workspace/get/feature/<model_id>/)
-     path('home/workspace/get/feature/<uuid:model_id>/', 
+     # URL: GET /api/home/workspace/get/session/<model_id>/)
+     path('home/workspace/get/session/<uuid:model_id>/', 
          WorkspaceSessionView.as_view(), 
-         name='workspace-feature'),
+         name='workspace-session'),
 ]

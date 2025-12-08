@@ -43,6 +43,7 @@ export default function App() {
     });
     const resultsRaw: any[] =
       Array.isArray(data?.results) ? data.results :
+      Array.isArray(data?.results?.results) ? data.results.results :   // ✅ 추가 (중요)
       Array.isArray(data?.page?.items) ? data.page.items :
       [];
 
@@ -50,16 +51,12 @@ export default function App() {
     setWorkspaces(results);
     const detailSettled = await Promise.allSettled(
       results.map(async (w) => {
-        const detail = await wsApi.getWorkspaceDetail(w.id);
-        const status =
-          detail?.status ??
-          detail?.session_status ??
-          detail?.workspace?.status ??
-          detail?.workspace?.session_status;
-
+        const s = await wsApi.getWorkspaceSession(w.id); // <- 이 함수는 api/workspace에 새로 만들어야 함
+        const status = s?.state ?? s?.status ?? s?.session_state;
         return { id: w.id, status };
       })
     );
+
 
     const statusMap = new Map<string, unknown>();
     for (const r of detailSettled) {
@@ -77,11 +74,12 @@ export default function App() {
 
     const count: number =
       typeof data?.count === "number" ? data.count :
+      typeof data?.results?.count === "number" ? data.results.count :   // ✅ 추가
       typeof data?.page?.count === "number" ? data.page.count :
-      mapped.length;
+      resultsRaw.length;
 
-    setNextDisabled(!(data?.next ?? data?.page?.next));
-    setPrevDisabled(!(data?.previous ?? data?.page?.previous));
+    setNextDisabled(!(data?.next ?? data?.results?.next ?? data?.page?.next));
+    setPrevDisabled(!(data?.previous ?? data?.results?.previous ?? data?.page?.previous));
 
     setTotalPages(Math.max(1, Math.ceil(count / pageSize)));
   };
@@ -105,7 +103,7 @@ export default function App() {
     const id = window.setInterval(() => {
       loadWorkspaces(currentPage).catch(() => {
       });
-    }, 5000);
+    }, 8000);
 
     return () => window.clearInterval(id);
   }, [currentScreen, currentPage]);

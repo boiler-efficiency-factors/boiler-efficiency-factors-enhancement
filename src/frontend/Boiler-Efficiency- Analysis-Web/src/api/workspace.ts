@@ -64,6 +64,11 @@ export async function getWorkspacePaging(page: number) {
   return data;
 }
 
+export async function getWorkspaceSession(modelId: string) {
+  const { data } = await api.get(`/api/home/workspace/get/session/${modelId}/`);
+  return data;
+}
+
 
 export async function listWorkspacesPaging(userId: string, page = 1, size = 10): Promise<WorkspacePagingResult> {
   const { data } = await api.get(`/api/home/workspace/get/paging/${encodeURIComponent(userId)}`, {

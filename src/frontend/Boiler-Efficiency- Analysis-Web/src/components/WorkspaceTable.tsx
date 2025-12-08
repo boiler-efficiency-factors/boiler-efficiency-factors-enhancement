@@ -22,7 +22,7 @@ function Header({ text }: { text: string }) {
 function formatKSTDateTime(value?: string) {
   if (!value || value === "-") return "-";
   const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return value;
+  if (Number.isNaN(d.getTime())) return value; // 파싱 실패 시 원문 출력
   return d.toLocaleString("ko-KR", {
     timeZone: "Asia/Seoul",
     year: "numeric",

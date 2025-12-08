@@ -33,7 +33,7 @@ api.interceptors.response.use(
 
     if (status === 401 && original && !original._retry && !isAuthRoute) {
       original._retry = true;
-      const newAccess = await refreshAccess(); // 실패하면 throw
+      const newAccess = await refreshAccess(); 
       original.headers = original.headers ?? {};
       (original.headers as any).Authorization = `Bearer ${newAccess}`;
       return api(original);

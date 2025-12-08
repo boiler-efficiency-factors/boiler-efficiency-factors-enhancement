@@ -20,6 +20,12 @@ export interface Workspace {
   tuning?: string;
   dependentVar?: string;
   excludedVar?: string[];
+  model_id?: string;
+  modelId?: string;
+  hyperparameters?: string[];
+  dependentVariable?: string;
+  excludedVariables?: string[];
+  [key: string]: any;
 }
 
 export interface WorkspaceCreateInput {

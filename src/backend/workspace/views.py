@@ -13,7 +13,7 @@ from django.utils import timezone
 import logging
 from .models import UserSequence, Session, SessionStateChoices, Model
 from .tasks import start_model_training
-from .serializers import WorkspaceCreateSerializer, WorkspaceDetailSerializer, FeatureImportanceSerializer, WorkspacePaginationSerializer
+from .serializers import WorkspaceCreateSerializer, WorkspaceDetailSerializer, SessionDetailSerializer, WorkspacePaginationSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -120,33 +120,20 @@ class WorkspaceDetailView(APIView):
         serializer = WorkspaceDetailSerializer(model_instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-class WorkspaceFeatureView(APIView):
+class WorkspaceSessionView(APIView):
     @extend_schema(
-        summary="워크스페이스 피쳐중요도 조회",  
-        description="특정 모델의 피쳐 중요도(Feature Importance) 데이터를 반환합니다.",
-        responses={200: FeatureImportanceSerializer}
+        summary="모델 세션 정보 조회",  
+        description="모델 세션 정보 조회 데이터를 반환합니다.",
+        responses={200: SessionDetailSerializer}
     )
     def get(self, request, model_id):
         session = Session.objects.filter(model_id=model_id).last()
         if not session:
-            return Response({"message": "분석 결과가 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"message": "결과가 없습니다."}, status=status.HTTP_404_NOT_FOUND)
         
-        serializer = FeatureImportanceSerializer(session)
+        serializer = SessionDetailSerializer(session)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-class WorkspaceMatrixView(APIView):
-    @extend_schema(
-        summary="워크스페이스 지표 조회",  
-        description="특정 모델의 성능 지표(Metrics/Confusion Matrix) 데이터를 반환합니다.",
-        responses={200: FeatureImportanceSerializer}
-    )
-    def get(self, request, model_id):
-        session = Session.objects.filter(model_id=model_id).last()
-        if not session:
-            return Response({"message": "분석 결과가 없습니다."}, status=status.HTTP_404_NOT_FOUND)
-        
-        serializer = FeatureImportanceSerializer(session)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    
     
 class WorkspaceListView(generics.ListAPIView):
     serializer_class = WorkspacePaginationSerializer

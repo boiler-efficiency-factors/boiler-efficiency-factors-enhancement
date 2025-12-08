@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import WorkspaceCreateView, WorkspaceDetailView, WorkspaceFeatureView, WorkspaceMatrixView, WorkspaceListView, WorkspaceDeleteView
+from .views import WorkspaceCreateView, WorkspaceDeleteView, WorkspaceDetailView, WorkspaceListView, WorkspaceSessionView
 
 urlpatterns = [
     # 워크스페이스 생성
@@ -29,12 +29,6 @@ urlpatterns = [
      # 피쳐 중요도 조회
      # URL: GET /api/home/workspace/get/feature/<model_id>/)
      path('home/workspace/get/feature/<uuid:model_id>/', 
-         WorkspaceFeatureView.as_view(), 
+         WorkspaceSessionView.as_view(), 
          name='workspace-feature'),
-
-     # 지표 조회
-     # URL: GET /api/home/workspace/get/matrix/<model_id>/
-     path('home/workspace/get/matrix/<uuid:model_id>/', 
-         WorkspaceMatrixView.as_view(), 
-         name='workspace-matrix'),
 ]

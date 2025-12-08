@@ -6,6 +6,10 @@ cd C:\workspace\boiler-efficiency-factors\src\backend
 
 echo Starting Development Servers...
 
+:: 0. Ngrok 실행 (새 창에서)
+:: 8000번 포트를 외부로 엽니다.
+start "Ngrok Tunnel" cmd /k "ngrok http 8000"
+
 :: 1. Docker Redis 실행 (이미 컨테이너가 만들어져 있다고 가정)
 start "Redis Server" cmd /c "docker start redis"
 

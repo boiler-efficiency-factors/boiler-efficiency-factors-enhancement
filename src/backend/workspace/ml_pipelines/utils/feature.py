@@ -1,13 +1,27 @@
 import io
 import base64
+import platform
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib import font_manager, rc
 
 def feature(model, X_train: pd.DataFrame, top_n: int = 10) -> str:
     """
     모델의 feature_importances_ 기반으로
     상위 top_n 피처 중요도 그래프를 만들고 base64 PNG 문자열로 반환
     """
+    system_name = platform.system()
+    if system_name == 'Windows':
+        rc('font', family='Malgun Gothic')
+    elif system_name == 'Darwin':
+        rc('font', family='AppleGothic')
+    else:
+        try:
+            rc('font', family='NanumGothic')
+        except:
+            pass
+    plt.rcParams['axes.unicode_minus'] = False
+
     importance = model.feature_importances_
 
     # 컬럼명 추출

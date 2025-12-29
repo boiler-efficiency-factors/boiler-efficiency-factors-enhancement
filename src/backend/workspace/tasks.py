@@ -16,7 +16,7 @@ def start_model_training(session_id: str):
         session.state = SessionStateChoices.TRAINING
         session.save(update_fields=['state'])
 
-        TrainerClass = trainer_factory.get_trainer(model_instance.model_name)
+        TrainerClass = trainer_factory.get(model_instance.model_name)
         trainer = TrainerClass(model_instance, session)
 
         #TODO: run()에서 각 모듈 내부에서 FAILED/COMPLETED 상태 저장.

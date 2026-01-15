@@ -1,6 +1,5 @@
-# boiler-efficiency-factors
+# boiler-efficiency-factors-enhancement
 > **대림로얄이앤피(주)**  
-> **종합설계프로젝트 8팀**
 
 ## 프로젝트 소개
 ### 수행 배경
@@ -29,17 +28,10 @@
 
 ### Data
 <img src="https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white"> <img src="https://img.shields.io/badge/pandas-150458?style=for-the-badge&logo=pandas&logoColor=white"> <img src="https://img.shields.io/badge/mysql-4479A1?style=for-the-badge&logo=mysql&logoColor=white">
-
-### Communication
-<img src="https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=Notion&logoColor=white"> <img src="https://img.shields.io/badge/discord-5865F2?style=for-the-badge&logo=discord&logoColor=white">
-
-### 노션 링크: [Notion](https://www.notion.so/261beae2901180b8aa1adf56b8e3ebc3?pvs=13)
 -----
 
 ## 팀 소개
 ### AI
-이윤경(조장)
-
 정유빈
 
 ### Front

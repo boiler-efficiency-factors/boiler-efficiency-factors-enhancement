@@ -5,13 +5,13 @@ import CreateAccountPage from "./pages/CreateAccountPage";
 import HomePage from "./pages/HomePage";
 import SessionPage from "./pages/SessionPage";
 import { getWorkspacePaging, deleteWorkspace } from "./api/workspace";
-
 import { token } from "./auth/token";
 import { session } from "./auth/session";
 import { getUserIdFromAccess } from "./auth/jwt";
-
 import * as authApi from "./api/auth";
 import * as wsApi from "./api/workspace";
+import { isTerminalStatus } from "./utils/workspaceStatus";
+
 
 type Screen = "login" | "createAccount" | "home" | "session";
 
@@ -32,8 +32,22 @@ export default function App() {
 
   const loadWorkspaces = async (page: number) => {
     const data: any = await getWorkspacePaging(page);
+
+    const buildStableId = (raw: any): string => {
+      const v = raw?.id ?? raw?.model_id ?? raw?.workspace_id ?? raw?.session_id;
+      const s = v == null ? "" : String(v).trim();
+      if (s) return s;
+
+      const name = String(raw?.name ?? raw?.workspace ?? raw?.title ?? "ws");
+      const created = String(raw?.createdAt ?? raw?.created_at ?? raw?.created ?? "");
+      const model = String(raw?.model ?? raw?.selected_model ?? "");
+      const start = String(raw?.startDate ?? raw?.start_date ?? "");
+      const end = String(raw?.endDate ?? raw?.end_date ?? "");
+      return `fallback:${name}|${model}|${start}|${end}|${created}`;
+    };
+
     const toWorkspace = (raw: any): Workspace => ({
-      id: String(raw?.id ?? raw?.model_id ?? raw?.workspace_id ?? ""),
+      id: buildStableId(raw),
       name: String(raw?.name ?? raw?.workspace ?? raw?.title ?? "-"),
       model: String(raw?.model ?? raw?.selected_model ?? "-"),
       startDate: String(raw?.startDate ?? raw?.start_date ?? raw?.start ?? "-"),
@@ -41,22 +55,27 @@ export default function App() {
       createdAt: String(raw?.createdAt ?? raw?.created_at ?? raw?.created ?? "-"),
       status: String(raw?.status ?? raw?.state ?? raw?.session_status ?? "pending"),
     });
+
     const resultsRaw: any[] =
       Array.isArray(data?.results) ? data.results :
-      Array.isArray(data?.results?.results) ? data.results.results :   // ✅ 추가 (중요)
+      Array.isArray(data?.results?.results) ? data.results.results :
       Array.isArray(data?.page?.items) ? data.page.items :
       [];
 
     const results: Workspace[] = resultsRaw.map(toWorkspace);
-    setWorkspaces(results);
-    const detailSettled = await Promise.allSettled(
-      results.map(async (w) => {
-        const s = await wsApi.getWorkspaceSession(w.id); // <- 이 함수는 api/workspace에 새로 만들어야 함
-        const status = s?.state ?? s?.status ?? s?.session_state;
-        return { id: w.id, status };
-      })
-    );
 
+    const targets = results.filter((w) => !isTerminalStatus(w.status));
+
+    const detailSettled: PromiseSettledResult<{ id: string; status: unknown }>[] =
+      targets.length > 0
+        ? await Promise.allSettled(
+            targets.map(async (w) => {
+              const s: any = await wsApi.getWorkspaceSession(w.id);
+              const status = s?.state ?? s?.status ?? s?.session_state;
+              return { id: w.id, status };
+            })
+          )
+        : [];
 
     const statusMap = new Map<string, unknown>();
     for (const r of detailSettled) {
@@ -65,24 +84,42 @@ export default function App() {
       }
     }
 
-    setWorkspaces((prev) =>
-      prev.map((w) => {
-        const s = statusMap.get(w.id);
-        return s == null ? w : { ...w, status: String(s) };
-      })
-    );
+    const merged: Workspace[] = results.map((w) => {
+      const s = statusMap.get(w.id);
+      return s == null ? w : { ...w, status: String(s) };
+    });
+
+    setWorkspaces((prev) => {
+      const prevMap = new Map(prev.map((w) => [w.id, w]));
+      return merged.map((w) => {
+        const p = prevMap.get(w.id);
+        if (!p) return w;
+
+        if (
+          p.name === w.name &&
+          p.model === w.model &&
+          p.startDate === w.startDate &&
+          p.endDate === w.endDate &&
+          p.createdAt === w.createdAt &&
+          p.status === w.status
+        ) return p;
+
+        return { ...p, ...w };
+      });
+    });
 
     const count: number =
       typeof data?.count === "number" ? data.count :
-      typeof data?.results?.count === "number" ? data.results.count :   // ✅ 추가
+      typeof data?.results?.count === "number" ? data.results.count :
       typeof data?.page?.count === "number" ? data.page.count :
       resultsRaw.length;
 
     setNextDisabled(!(data?.next ?? data?.results?.next ?? data?.page?.next));
     setPrevDisabled(!(data?.previous ?? data?.results?.previous ?? data?.page?.previous));
-
     setTotalPages(Math.max(1, Math.ceil(count / pageSize)));
   };
+
+
 
   useEffect(() => {
     const access = token.getAccess();
@@ -209,8 +246,8 @@ export default function App() {
           showPopup={showPopup}
           onCreateWorkspace={handleCreateWorkspace}
           onWorkspaceClick={handleWorkspaceClick}
-          //onDeleteWorkspace={handleDeleteWorkspace}
-          onDeleteWorkspace={() => {}}
+          onDeleteWorkspace={handleDeleteWorkspace}
+          // onDeleteWorkspace={() => {}}
           onPageChange={handlePageChange}
           nextDisabled={nextDisabled}
           prevDisabled={prevDisabled}

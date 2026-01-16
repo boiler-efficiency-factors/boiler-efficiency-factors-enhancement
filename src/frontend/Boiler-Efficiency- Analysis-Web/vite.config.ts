@@ -1,10 +1,10 @@
-
-  import { defineConfig } from 'vite';
-  import react from '@vitejs/plugin-react-swc';
+import tailwindcss from "@tailwindcss/vite";
+import { defineConfig } from "vite";  
+import react from '@vitejs/plugin-react-swc';
   import path from 'path';
 
   export default defineConfig({
-    plugins: [react()],
+    plugins: [react(), tailwindcss()],
     resolve: {
       extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
       alias: {
@@ -59,7 +59,7 @@
       open: true,
       proxy: {
         "/api": {
-          target: "https://pearlie-overfervent-nonimputatively.ngrok-free.dev",
+          target: "https://grayson-unenumerated-incapably.ngrok-free.dev",
           changeOrigin: true,
           secure: true,
           headers: {

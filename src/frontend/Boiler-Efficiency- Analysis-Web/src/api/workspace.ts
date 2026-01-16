@@ -1,19 +1,7 @@
+// src/api/workspace.ts
 import { api } from "./client";
 import type { Workspace, WorkspaceCreateInput, WorkspacePage } from "../types/workspace";
 import { mapWorkspace, normalizeWorkspacePage } from "../types/workspace";
-
-export type Workspace = {
-  model_id: string;     
-  workspace: string;
-  model_name: string;
-  start_date: string;
-  end_date: string;
-  tuning?: string;
-  parameter?: Record<string, any>;
-  dependent_var?: string;
-  exclude_var?: string[];
-  created_at?: string;
-};
 
 export type Paginated<T> = {
   count: number;
@@ -57,10 +45,9 @@ export async function listWorkspaces(userId: string, page = 1, size = 10): Promi
 }
 
 export async function getWorkspacePaging(page: number) {
-  const { data } = await api.get<Paginated<Workspace>>(
-    "/api/home/workspace/get/paging/",
-    { params: { page } }
-  );
+  const { data } = await api.get<Paginated<any>>("/api/home/workspace/get/paging/", {
+    params: { page },
+  });
   return data;
 }
 
@@ -68,7 +55,6 @@ export async function getWorkspaceSession(modelId: string) {
   const { data } = await api.get(`/api/home/workspace/get/session/${modelId}/`);
   return data;
 }
-
 
 export async function listWorkspacesPaging(userId: string, page = 1, size = 10): Promise<WorkspacePagingResult> {
   const { data } = await api.get(`/api/home/workspace/get/paging/${encodeURIComponent(userId)}`, {
@@ -150,11 +136,11 @@ export async function getWorkspaceDetail(modelId: string): Promise<any> {
 }
 
 export async function getWorkspaceMain(modelId: string): Promise<any> {
-  const { data } = await api.get(`/api/home/workspace/get/main/${encodeURIComponent(modelId)}/`);
-  return data;
+  return getWorkspaceDetail(modelId);
 }
 
 export async function getWorkspaceFeature(modelId: string): Promise<any> {
-  const { data } = await api.get(`/api/home/workspace/get/feature/${encodeURIComponent(modelId)}/`);
-  return data;
+  return getWorkspaceSession(modelId);
 }
+
+

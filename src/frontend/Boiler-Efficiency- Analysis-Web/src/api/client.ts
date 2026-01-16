@@ -8,7 +8,6 @@ export const raw = axios.create({ baseURL });
 export const api = axios.create({ baseURL });
 
 api.interceptors.request.use((config) => {
-  //(config.headers as any)["ngrok-skip-browser-warning"] = "69420";
   const access = token.getAccess();
   if (access) {
     config.headers = config.headers ?? {};

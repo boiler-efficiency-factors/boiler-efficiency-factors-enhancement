@@ -8,14 +8,14 @@ export type ModelName =
   | string;
 
 export interface Workspace {
-  id: string;
-  name: string;
-  model: ModelName;
+  id: string | number;
+  name: string | number;
+  model: string;
   startDate: string;
   endDate: string;
   createdAt?: string;
   modifiedAt?: string;
-  status: WorkspaceStatus;
+  status: unknown;
   parameter?: Record<string, unknown>;
   tuning?: string;
   dependentVar?: string;

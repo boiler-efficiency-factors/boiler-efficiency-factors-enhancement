@@ -15,6 +15,9 @@ def preprocessor(raw_df: pd.DataFrame) -> pd.DataFrame:
     ]
     df = df.drop(columns=cols_to_drop, errors='ignore')
 
+    # 100이상 값 제거
+    
+
     # 2. 결측치 처리 및 인코딩 (범주형)
     cat_cols = df.select_dtypes(include=['object']).columns
     if not cat_cols.empty:

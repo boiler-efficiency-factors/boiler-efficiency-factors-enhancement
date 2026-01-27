@@ -1,5 +1,6 @@
 from django.urls import path
-from .views import WorkspaceCreateView, WorkspaceDeleteView, WorkspaceDetailView, WorkspaceListView, WorkspaceSessionView
+from .views import (WorkspaceCreateView, WorkspaceDeleteView, WorkspaceDetailView, WorkspaceListView, WorkspaceSessionView
+                    , DashboardSummaryView, DashboardTimeseriesView, DashboardHeatmapView)
 
 urlpatterns = [
     # 워크스페이스 생성
@@ -31,4 +32,16 @@ urlpatterns = [
      path('home/workspace/get/session/<uuid:model_id>/', 
          WorkspaceSessionView.as_view(), 
          name='workspace-session'),
+         
+    path('home/dashboard/summary/',
+         DashboardSummaryView.as_view(),
+         name='dashboard-summary'),
+
+    path('home/dashboard/timeseries/',
+         DashboardTimeseriesView.as_view(),
+         name='dashboard-timeseries'),
+
+    path('home/dashboard/heatmap/',
+         DashboardHeatmapView.as_view(),
+         name='dashboard-heatmap'),
 ]

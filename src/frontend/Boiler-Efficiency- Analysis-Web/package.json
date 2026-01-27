@@ -42,7 +42,7 @@
             "react-dom": "^18.3.1",
             "react-hook-form": "^7.55.0",
             "react-resizable-panels": "^2.1.7",
-            "recharts": "^2.15.2",
+            "recharts": "^2.15.4",
             "sonner": "^2.0.3",
             "tailwind-merge": "*",
             "vaul": "^1.1.2"
@@ -51,6 +51,7 @@
             "@tailwindcss/vite": "^4.1.18",
             "@types/node": "^20.10.0",
             "@types/react": "^19.2.8",
+            "@types/recharts": "^1.8.29",
             "@vitejs/plugin-react-swc": "^3.10.2",
             "autoprefixer": "^10.4.23",
             "postcss": "^8.5.6",

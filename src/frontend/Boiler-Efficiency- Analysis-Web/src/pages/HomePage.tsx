@@ -1,4 +1,3 @@
-// src/pages/HomePage.tsx
 
 /*
 import { useMemo, useState } from "react";
@@ -96,6 +95,8 @@ import Home from "../components/Home";
 import HomePopupAddWorkspace from "../components/HomePopupAddWorkspace";
 import HomePopupCompareSelect from "../components/HomePopupCompareSelect";
 import CompareWorkspaceResult from "../components/CompareWorkspaceResult";
+import Dashboard30Days from "../components/dashboard/DashBoard30Days";
+
 
 interface HomePageProps {
   username: string;
@@ -134,13 +135,11 @@ function ConfirmDeleteModal({
 }) {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center">
-      {/* overlay */}
       <div
         className="absolute inset-0 z-0 backdrop-blur-[2px]"
         style={{ backgroundColor: "rgba(0,0,0,0.70)" }}
         onClick={onCancel}
       />
-      {/* modal */}
       <div
         className="
           relative z-10
@@ -196,7 +195,7 @@ function ConfirmDeleteModal({
   );
 }
 
-<div className="bg-red-600 text-white p-4">TEST</div>
+// <div className="bg-red-600 text-white p-4">TEST</div>
 
 
 export default function HomePage(props: HomePageProps) {
@@ -223,6 +222,18 @@ export default function HomePage(props: HomePageProps) {
     const ws = props.workspaces.find((w: any) => (w.id ?? w.workspace_id) === workspaceId);
     return (ws as any)?.model_id ?? (ws as any)?.modelId ?? workspaceId;
   };
+
+  type HomeTab = "workspaces" | "dashboard";
+  const [activeTab, setActiveTab] = useState<HomeTab>("workspaces");
+
+  const tabButtonClass = (tab: HomeTab) => {
+    const base = "px-4 py-2 text-sm font-semibold rounded-md border transition";
+    const isActive = activeTab === tab;
+    return isActive
+      ? `${base} bg-slate-800 text-white border-slate-800`
+      : `${base} bg-white text-slate-700 border-slate-200 hover:bg-slate-50`;
+  };
+
 
   const startCompare = (ids: string[]) => {
     const modelIds = ids.map(resolveModelId);
@@ -276,47 +287,85 @@ export default function HomePage(props: HomePageProps) {
     }
   };
 
-  return (
-    <div className="relative min-h-screen w-full">
-      <Home
-        username={props.username}
-        onAddWorkspace={props.onAddWorkspace}
-        onOpenCompare={openCompare}
-        onWorkspaceClick={props.onWorkspaceClick}
-        workspaces={props.workspaces}
-        currentPage={props.currentPage}
-        totalPages={props.totalPages}
-        onPageChange={props.onPageChange}
-        nextDisabled={props.nextDisabled}
-        prevDisabled={props.prevDisabled}
-        onNext={props.onNext}
-        onPrev={props.onPrev}
-        selectedWorkspaceIds={selectedWorkspaceIds}
-        onToggleWorkspaceSelect={toggleWorkspaceSelect}
-        onRequestDeleteSelected={requestDeleteSelected}
-      />
+return (
+  <div className="relative min-h-screen w-full">
 
-      {props.showPopup && (
-        <HomePopupAddWorkspace onClose={props.onClosePopup} onCreateWorkspace={props.onCreateWorkspace} />
-      )}
+    <div className="max-w-6xl mx-auto px-6 pt-8">
+      <div className="flex items-center gap-2">
+        <button
+          className={tabButtonClass("workspaces")}
+          onClick={() => setActiveTab("workspaces")}
+        >
+          워크스페이스
+        </button>
 
-      {showCompareSelect && (
-        <HomePopupCompareSelect workspaces={listForCompare} onClose={closeCompare} onConfirm={startCompare} />
-      )}
-
-      {showCompareResult && (
-        <CompareWorkspaceResult workspaceIds={compareIds} onClose={() => setShowCompareResult(false)} />
-      )}
-
-      {showDeleteConfirm && (
-        <ConfirmDeleteModal
-          count={selectedWorkspaceIds.length}
-          onCancel={() => setShowDeleteConfirm(false)}
-          onConfirm={confirmDeleteSelected}
-          isDeleting={isDeleting}
-        />
-      )}
+        <button
+          className={tabButtonClass("dashboard")}
+          onClick={() => setActiveTab("dashboard")}
+        >
+          최근 30일 운영 대시보드
+        </button>
+      </div>
     </div>
-  );
+
+    {activeTab === "workspaces" ? (
+      <>
+        <Home
+          username={props.username}
+          onAddWorkspace={props.onAddWorkspace}
+          onOpenCompare={openCompare}
+          onWorkspaceClick={props.onWorkspaceClick}
+          workspaces={props.workspaces}
+          currentPage={props.currentPage}
+          totalPages={props.totalPages}
+          onPageChange={props.onPageChange}
+          nextDisabled={props.nextDisabled}
+          prevDisabled={props.prevDisabled}
+          onNext={props.onNext}
+          onPrev={props.onPrev}
+          selectedWorkspaceIds={selectedWorkspaceIds}
+          onToggleWorkspaceSelect={toggleWorkspaceSelect}
+          onRequestDeleteSelected={requestDeleteSelected}
+        />
+        {props.showPopup && (
+          <HomePopupAddWorkspace
+            onClose={props.onClosePopup}
+            onCreateWorkspace={props.onCreateWorkspace}
+          />
+        )}
+
+        {showCompareSelect && (
+          <HomePopupCompareSelect
+            workspaces={listForCompare}
+            onClose={closeCompare}
+            onConfirm={startCompare}
+          />
+        )}
+
+        {showCompareResult && (
+          <CompareWorkspaceResult
+            workspaceIds={compareIds}
+            onClose={() => setShowCompareResult(false)}
+          />
+        )}
+
+        {showDeleteConfirm && (
+          <ConfirmDeleteModal
+            count={selectedWorkspaceIds.length}
+            onCancel={() => setShowDeleteConfirm(false)}
+            onConfirm={confirmDeleteSelected}
+            isDeleting={isDeleting}
+          />
+        )}
+      </>
+    ) : (
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        <div className="bg-[#efece8] rounded-2xl shadow-sm border border-slate-200 p-8">
+          <Dashboard30Days />
+        </div>
+      </div>
+    )}
+  </div>
+);
 }
 
